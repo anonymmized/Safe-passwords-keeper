@@ -2,10 +2,13 @@
 import os
 
 
-def mover(filepath):        # <- сюда будет передаваться уже зашифрованный файл
-    os.system(f"mv {filepath} /Volumes/pass_keeper")
+def mover(drive, filepath):        # <- сюда будет передаваться уже зашифрованный файл
+    cur_dir = "/Volumes"
+    folder_path = os.path.join(cur_dir, drive)
+    os.system(f"mv {filepath} {folder_path}")
 
-filename = input("Enter filename: ")
+drive = input("[?] Enter the name of the drive: ")
+filename = input("[?] Enter filename: ")
 print("[*] Moving your file on flash drive...")
-mover(filename)
+mover(drive, filename)
 print("[***] Complete!")
