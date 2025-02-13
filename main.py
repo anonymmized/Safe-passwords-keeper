@@ -1,5 +1,5 @@
-import enc_dec_file
-import mover
+"""import enc_dec_file
+import mover"""
 import time
 
 def main():

@@ -12,3 +12,4 @@ filename = input("[?] Enter filename: ")
 print("[*] Moving your file on flash drive...")
 mover(drive, filename)
 print("[***] Complete!")
+# проверять filename на наличие в существующей директории
