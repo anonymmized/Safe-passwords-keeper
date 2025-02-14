@@ -1,9 +1,6 @@
 """/Volumes/pass_keeper"""
 import os
 
-from sympy.codegen import While
-
-
 def mover(drive, filepath):        # <- сюда будет передаваться уже зашифрованный файл
     cur_dir = "/Volumes"
     folder_path = os.path.join(cur_dir, drive)
@@ -23,4 +20,3 @@ while True:
         break
     else:
         print("[!] There is no drive like that, please retype...")
-# проверять filename на наличие в существующей директории
