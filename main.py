@@ -1,18 +1,18 @@
 from functools import wraps
-from encode_file import encrypt_file
 from cryptography.fernet import Fernet
 from key_gen import key_generation
 import os
-from mover import mover
 import time
 import sys
-
+import shutil
 
 RED = "\033[91m"
 END = "\033[0m"
 
 key_name = "key.txt"
+
 def key_check():
+    """Generates a key if it doesn't exist."""
     if not os.path.isfile(key_name):
         print("[*] Key will generate now. Processing...")
         key_generation()
@@ -21,8 +21,9 @@ def key_check():
 
 
 def red_output(func):
+    """Decorator to print output in red color."""
     @wraps(func)
-    def wrapper(*args, **kwargs):
+    def wrapper():
         original_stdout = sys.stdout
 
         class Buffer:
@@ -35,13 +36,144 @@ def red_output(func):
                     pass
 
         sys.stdout = Buffer()
-        result = func(*args, **kwargs)
+        result = func()
         sys.stdout = original_stdout
         return result
     return wrapper
 
+
+def encrypt_move():
+    """Encrypts files, moves them to a flash drive, and handles user interaction."""
+    time.sleep(2)
+    answer_to_encode = input("[!] Preparation is completed\nNow program is ready to start encrypting your files.\nWhether to proceed to work [Y/n]: ")
+
+    if answer_to_encode.lower() == "y":
+        print("[!] Files with passwords will encode now [!]")
+        files_to_process = []  # Store files to encrypt and move
+
+        for filename in os.listdir('.'):
+            if 'pass' in filename.lower() and os.path.splitext(filename)[1].lower() == '.txt':
+                files_to_process.append(filename)
+
+        if not files_to_process:
+            print("[!] No files with 'pass' and .txt extension found to encrypt.")
+            return  # Exit the function if no files are found
+
+
+        with open("key.txt", "rb") as file:
+            key = file.read()
+            f = Fernet(key)
+
+        for filename in files_to_process:
+            try:
+                time.sleep(1)
+                print(f"[*] File encryption process - {filename}")
+                encrypt_file(f, filename)
+                os.remove(filename)  # Remove the original file after encryption
+                print(f"[+] Original file {filename} removed")
+
+            except Exception as e:
+                print(f"[!] Error encrypting or removing {filename}: {e}")
+                continue # continue to the next file
+
+        print("[|] All files were encrypted!\nNow program will move them to the flash drive...")
+        while True:
+            time.sleep(1)
+            drive = input("[?] Enter the name of the drive: ")
+            drive_path = f"/Volumes/{drive}"
+            if os.path.ismount(drive_path):
+                for filename in files_to_process:
+                    encrypted_file = os.path.splitext(filename)[0] + ".enc" # Get the encrypted filename
+                    if os.path.exists(encrypted_file):  # Check if the encrypted file exists
+                        try:
+                            time.sleep(1)
+                            print(f"[*] Moving {encrypted_file} to flash drive...")
+                            mover_to_drive(drive, encrypted_file)
+                            print("[***] Complete!")
+                        except Exception as e:
+                            print(f"[!] Error moving {encrypted_file} to drive: {e}")
+                    else:
+                        print(f"[!] Encrypted file {encrypted_file} not found.  Skipping.")
+                break
+            else:
+                time.sleep(1)
+                print("[!] There is no drive like that, please retype...")
+
+
+    elif answer_to_encode.lower() == "n":
+        time.sleep(1)
+        print("[-] Returning to main menu...")
+        menu()
+    else:
+        time.sleep(1)
+        print("[!] Invalid input. Please try again.")
+
+
+def decrypt_return():
+    """Decrypts files from a flash drive and handles user interaction."""
+    time.sleep(2)
+    answer_to_decode = input("[!] Preparation is completed\nNow program is ready to start decrypting your files.\nWhether to proceed to work [Y/n]: ")
+
+    if answer_to_decode.lower() == "y":
+        print("[!] Files with passwords will return now [!]")
+        drive = input("[?] Enter the name of the drive: ")
+        drive_path = f"/Volumes/{drive}"
+
+        if os.path.exists(drive_path):
+            print(f"Drive {drive} found.")
+            files_to_decrypt = []
+            for filename in os.listdir(drive_path):
+                if 'pass' in filename.lower() and filename.endswith(".enc"):
+                    files_to_decrypt.append(filename)
+
+            if not files_to_decrypt:
+                print("[!] No encrypted files with 'pass' found on the drive.")
+                return
+
+            # Create 'returned_files' directory if it doesn't exist
+            if not os.path.exists("returned_files"):
+                os.makedirs("returned_files")
+
+            for filename in files_to_decrypt:
+                try:
+                    time.sleep(1)
+                    print(f"[*] Returning {filename} to device...")
+                    mover_from_drive(drive, filename)
+                    print("[***] Complete!")
+                except Exception as e:
+                    print(f"[!] Error moving {filename} from drive: {e}")
+                    continue # continue to the next file
+
+            # Decrypt the files
+            with open("key.txt", "rb") as file:
+                key = file.read()
+                f = Fernet(key)
+
+            for filename in os.listdir('./returned_files'):
+                if filename.endswith(".enc"):
+                    try:
+                        print(f"[*] The process of decryption of the file - {filename}")
+                        decrypt_file(f, filename)  # Pass the Fernet instance
+                    except Exception as e:
+                        print(f"[!] Error decrypting {filename}: {e}")
+                        continue
+
+        else:
+            print(f"Drive {drive} not found. Please check the name and try again.")
+            return
+
+    elif answer_to_decode.lower() == "n":
+        time.sleep(1)
+        print("[-] Returning to main menu...")
+        menu()
+    else:
+        time.sleep(1)
+        print("[!] Invalid input. Please try again.")
+
+
 @red_output
 def menu():
+    """Displays the main menu and handles user choices."""
     project_name = (
         " ____   _    ____ ____    _  _______ _____ ____  _____ ____  \n"
         "|  _ \\ / \\  / ___/ ___|  | |/ / ____| ____|  _ \\| ____|  _ \\ \n"
@@ -51,84 +183,74 @@ def menu():
     )
     print(project_name)
     print("[#] This program moving your files with 'pass' in filenames to flash drive!\n")
-    action = int(input("[1] Encrypt and move\n[2] Decrypt and return\n[1|2]: "))
+    action = input("[1] Encrypt and move\n[2] Decrypt and return\n[1|2]: ")
 
-    while True:
-        if action == 1:
-            encrypt_move()
-        elif action == 2:
-            pass # decrypt_remove
-        else:
-            print("[*] Try again")
-
-
-def encrypt_move():
-    time.sleep(2)
-    answer_to_encode = input("[!] Preparation is completed\nNow program is ready to start encrypting your files.\nWhether to proceed to work [Y/n]: ")
-    if answer_to_encode == "Y" or answer_to_encode == "y":
-        time.sleep(1)
-        print("[!] Files with passwords will encode now [!]")
-        files = os.listdir('.')
-
-        for filename in os.listdir('.'):
-            with open("key.txt", "rb") as file:
-                key = file.read()
-                if 'pass' in filename.lower():
-                    if os.path.splitext(filename)[1].lower() == '.txt':
-                        time.sleep(1)
-                        print(f"[*] File encryption process - {filename}")
-                        encrypt_file(Fernet(key), filename)
-                        os.system(f'rm {filename}')
-
-            if any('pass' in file.lower() for file in files):
-                print("[|] All files were encrypted!\nNow program will move it on flash drive...")
-            else:
-                print("[!] There is nothing to encrypt")
-                raise FileNotFoundError
-
-            while True:
-                time.sleep(1)
-                drive = input("[?] Enter the name of the drive: ")
-                if os.path.ismount(f"/Volumes/{drive}"):
-                    for filename in os.listdir('.'):
-                        if 'pass' in filename.lower():
-                            if os.path.isfile(filename):
-                                time.sleep(1)
-                                print(f"[*] Moving {filename} on flash drive...")
-                                mover(drive, filename)
-                                print("[***] Complete!")
-                                return
-
-                else:
-                    time.sleep(1)
-                    print("[!] There is no drive like that, please retype...")
-
-    elif answer_to_encode == "n":
-        time.sleep(1)
-        print("[-] Returning to main menu...")
-        menu()
-
+    if action == "1":
+        encrypt_move()
+    elif action == "2":
+        decrypt_return()
     else:
-        time.sleep(1)
-        print("[!] Try again")
+        print("[*] Invalid input. Please try again.")
+        menu() # Restart the menu
 
 
-def decrypt_return():
-    time.sleep(2)
-    answ = input("[*] Preparation is completed\n Do you want to return your files [Y/n]: ")
+def decrypt_file(key, file_path):
+    """Decrypts a single file."""
+    try:
+        with open(f'./returned_files/{file_path}', "rb") as file:
+            encrypted_data = file.read()
+        decrypted_data = key.decrypt(encrypted_data) # use the Fernet instance
+        filename_without_ext = os.path.splitext(file_path)[0]
+        with open(f'./returned_files/{filename_without_ext}.txt', 'wb') as file:
+            file.write(decrypted_data)
+        print(f"[*] Decryption of {file_path} is complete.")
+        os.remove(f'./returned_files/{file_path}') # Delete the encrypted file after decryption
 
-    while True:
-
-        if answ == "y" or answ == "Y":
-            pass
-
-        elif answ == "n":
-            print("[*] Finishing program...")
-            return 0
-
-        else:
-            print("[!] No answer like that")
+    except FileNotFoundError as err:
+        print(f"Error decrypting {file_path}: {err}")
+    except Exception as e:
+        print(f"Error decrypting {file_path}: {e}")
 
 
+def mover_to_drive(drive, file_path):
+    """Moves a file to a flash drive."""
+    try:
+        shutil.move(file_path, f'/Volumes/{drive}/{file_path}')
+        print(f"[*] {file_path} moved to drive {drive} successfully.")
+    except FileNotFoundError as err:
+        print(f"Error moving {file_path}: {err}")
+    except Exception as e:
+        print(f"Error moving {file_path}: {e}")
+
+def mover_from_drive(drive, file_path):
+    """Moves a file from a flash drive to the 'returned_files' directory."""
+    try:
+        shutil.move(f'/Volumes/{drive}/{file_path}', './returned_files')
+        print(f"[*] {file_path} moved from drive {drive} successfully.")
+    except FileNotFoundError as err:
+        print(f"Error moving {file_path}: {err}")
+    except Exception as e:
+        print(f"Error moving {file_path}: {e}")
+
+
+def encrypt_file(key, file_path):
+    """Encrypts a single file."""
+    try:
+        with open(file_path, 'rb') as file:
+            data = file.read()
+        encrypted_data = key.encrypt(data) # Use the Fernet instance
+        filename_without_ext = os.path.splitext(file_path)[0]
+        with open(f'{filename_without_ext}.enc', 'wb') as file:
+            file.write(encrypted_data)
+        print(f"[*] Encryption of {file_path} is complete.")
+
+    except FileNotFoundError as err:
+        print(f"Error encrypting {file_path}: {err}")
+    except Exception as e:
+        print(f"Error encrypting {file_path}: {e}")
+
+
+
+# Main execution
 key_check()
 menu()
