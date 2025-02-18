@@ -1,11 +1,51 @@
-"""
-import mover"""
+from functools import wraps
 import os
 from encode_file import encrypt_file
 from decode_file import decrypt_file
 from cryptography.fernet import Fernet
 from mover import mover
 import time
+import sys
+
+RED = "\033[91m"
+END = "\033[0m"
+
+
+def red_output(func):
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        # Сохраняем оригинальный поток вывода
+        original_stdout = sys.stdout
+
+        # Создаем буфер для хранения выводимых строк
+        class Buffer:
+            def write(self, text):
+                # Меняем цвет текста на красный
+                original_stdout.write(RED + text + END)
+
+            # Добавляем метод flush для очистки буфера
+            def flush(self):
+                # Пытаемся вызвать flush оригинального потока вывода
+                try:
+                    original_stdout.flush()
+                except AttributeError:
+                    # Игнорируем ошибку, если метод flush() не существует
+                    pass
+
+        # Подменяем стандартный поток вывода на наш буфер
+        sys.stdout = Buffer()
+
+        # Вызываем основную функцию
+        result = func(*args, **kwargs)
+
+        # Восстанавливаем оригинальный поток вывода
+        sys.stdout = original_stdout
+
+        return result
+
+    return wrapper
+
+@red_output
 def menu():
     project_name = (
         " ____   _    ____ ____    _  _______ _____ ____  _____ ____  \n"
@@ -34,16 +74,26 @@ def encrypt_move():
             if answer_to_encode == "Y" or answer_to_encode == "y":
                 time.sleep(1)
                 print("[!] Files with passwords will encode now [!]")
+                files = os.listdir('.')
+
                 for filename in os.listdir('.'):
                     with open("key.txt", "rb") as file:
                         key = file.read()
                     if 'pass' in filename.lower():
-                        time.sleep(1)
-                        print(f"[*] File encryption process - {filename}")
-                        encrypt_file(Fernet(key), filename)
-                        os.system(f'rm {filename}')
-                time.sleep(1)
-                print("[|] All files were encrypted!\nNow program will move it on flash drive...")
+                        if os.path.splitext(filename)[1].lower() == '.txt':
+                            time.sleep(1)
+                            print(f"[*] File encryption process - {filename}")
+                            encrypt_file(Fernet(key), filename)
+                            os.system(f'rm {filename}')
+
+                if any('pass' in file.lower() for file in files):
+                    print("[|] All files were encrypted!\nNow program will move it on flash drive...")
+                else:
+                    print("[!] There is nothing to encrypt")
+                    raise FileNotFoundError
+
+
+
                 while True:
                     time.sleep(1)
                     drive = input("[?] Enter the name of the drive: ")
@@ -76,6 +126,7 @@ def encrypt_move():
         else:
             time.sleep(1)
             print("[!] No answer like that")
+            return 0
 
 def decrypt_return():
     time.sleep(2)
@@ -88,3 +139,4 @@ def decrypt_return():
             return 0
         else:
             print("[!] No answer like that")
+menu()
