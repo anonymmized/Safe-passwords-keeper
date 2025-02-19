@@ -1,10 +1,11 @@
 from functools import wraps
 from cryptography.fernet import Fernet
 from key_gen import key_generation
+from enc_dec import encrypt_file, decrypt_file
+from mover import mover_to_drive, mover_from_drive
 import os
 import time
 import sys
-import shutil
 
 RED = "\033[91m"
 END = "\033[0m"
@@ -170,7 +171,6 @@ def decrypt_return():
         time.sleep(1)
         print("[!] Invalid input. Please try again.")
 
-
 @red_output
 def menu():
     """Displays the main menu and handles user choices."""
@@ -192,63 +192,6 @@ def menu():
     else:
         print("[*] Invalid input. Please try again.")
         menu() # Restart the menu
-
-
-def decrypt_file(key, file_path):
-    """Decrypts a single file."""
-    try:
-        with open(f'./returned_files/{file_path}', "rb") as file:
-            encrypted_data = file.read()
-        decrypted_data = key.decrypt(encrypted_data) # use the Fernet instance
-        filename_without_ext = os.path.splitext(file_path)[0]
-        with open(f'./returned_files/{filename_without_ext}.txt', 'wb') as file:
-            file.write(decrypted_data)
-        print(f"[*] Decryption of {file_path} is complete.")
-        os.remove(f'./returned_files/{file_path}') # Delete the encrypted file after decryption
-
-    except FileNotFoundError as err:
-        print(f"Error decrypting {file_path}: {err}")
-    except Exception as e:
-        print(f"Error decrypting {file_path}: {e}")
-
-
-def mover_to_drive(drive, file_path):
-    """Moves a file to a flash drive."""
-    try:
-        shutil.move(file_path, f'/Volumes/{drive}/{file_path}')
-        print(f"[*] {file_path} moved to drive {drive} successfully.")
-    except FileNotFoundError as err:
-        print(f"Error moving {file_path}: {err}")
-    except Exception as e:
-        print(f"Error moving {file_path}: {e}")
-
-def mover_from_drive(drive, file_path):
-    """Moves a file from a flash drive to the 'returned_files' directory."""
-    try:
-        shutil.move(f'/Volumes/{drive}/{file_path}', './returned_files')
-        print(f"[*] {file_path} moved from drive {drive} successfully.")
-    except FileNotFoundError as err:
-        print(f"Error moving {file_path}: {err}")
-    except Exception as e:
-        print(f"Error moving {file_path}: {e}")
-
-
-def encrypt_file(key, file_path):
-    """Encrypts a single file."""
-    try:
-        with open(file_path, 'rb') as file:
-            data = file.read()
-        encrypted_data = key.encrypt(data) # Use the Fernet instance
-        filename_without_ext = os.path.splitext(file_path)[0]
-        with open(f'{filename_without_ext}.enc', 'wb') as file:
-            file.write(encrypted_data)
-        print(f"[*] Encryption of {file_path} is complete.")
-
-    except FileNotFoundError as err:
-        print(f"Error encrypting {file_path}: {err}")
-    except Exception as e:
-        print(f"Error encrypting {file_path}: {e}")
-
 
 
 # Main execution
