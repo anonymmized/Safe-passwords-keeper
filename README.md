@@ -38,8 +38,6 @@ This project helps you securely store all your passwords in one place on a stora
     *   `[1] - Encrypt and Move to Flash Drive`
     *   `[2] - Decrypt and Move Back to Device`
 
-    *(Example Screenshot - Replace with your actual screenshot)*
-    ![Screenshot 1](YOUR_SCREENSHOT_LINK_OR_IMAGE_FILE)  # Replace with the URL or relative path to your screenshot (e.g., ./docs/shot1.png or ../../images/shot1.png)
 
 ### Encrypt and Move to Flash Drive
 
