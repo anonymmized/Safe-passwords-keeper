@@ -43,8 +43,6 @@ This project helps you securely store all your passwords in one place on a stora
 
 This option searches for all files in the current directory containing the string `pass`.  It encrypts these files, deletes the originals, and moves the encrypted versions to the specified flash drive.
 
-    *(Example Screenshot - Replace with your actual screenshot)*
-    ![Screenshot 2](YOUR_SCREENSHOT_LINK_OR_IMAGE_FILE)  # Replace with the URL or relative path to your screenshot
 
     1.  **Specify Flash Drive:**  You will be prompted to enter the correct name of your flash drive during the move operation.
     2.  **Successful Transfer:**  The files will be successfully moved to the flash drive after you enter the correct drive name.
