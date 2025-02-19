@@ -61,4 +61,4 @@ This option moves all files containing the string `pass` from the flash drive ba
 
 **License:**
 
-This project is licensed under the [MIT License](LICENSE).  Please refer to the `LICENSE` file in the repository for more information.  (Include the `LICENSE` file in the root of your project.)
+This project is licensed under the [MIT License](LICENSE).  Please refer to the `LICENSE` file in the repository for more information.
