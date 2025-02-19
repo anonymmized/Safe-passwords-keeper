@@ -9,7 +9,7 @@ This project helps you securely store all your passwords in one place on a stora
 1.  **Clone the repository:**
 
     ```bash
-    git clone "YOUR_REPOSITORY_LINK" 
+    git clone https://github.com/anonymmized/Safe-passwords-keeper 
     cd Safe-passwords-keeper
     ```
 
