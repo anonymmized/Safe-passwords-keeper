@@ -44,13 +44,12 @@ def red_output(func):
 
 
 def encrypt_move():
-    """Encrypts files, moves them to a flash drive, and handles user interaction."""
     time.sleep(2)
     answer_to_encode = input("[!] Preparation is completed\nNow program is ready to start encrypting your files.\nWhether to proceed to work [Y/n]: ")
 
     if answer_to_encode.lower() == "y":
         print("[!] Files with passwords will encode now [!]")
-        files_to_process = []  # Store files to encrypt and move
+        files_to_process = []
 
         for filename in os.listdir('.'):
             if 'pass' in filename.lower() and os.path.splitext(filename)[1].lower() == '.txt':
@@ -58,7 +57,7 @@ def encrypt_move():
 
         if not files_to_process:
             print("[!] No files with 'pass' and .txt extension found to encrypt.")
-            return  # Exit the function if no files are found
+            return
 
 
         with open("key.txt", "rb") as file:
@@ -70,12 +69,12 @@ def encrypt_move():
                 time.sleep(1)
                 print(f"[*] File encryption process - {filename}")
                 encrypt_file(f, filename)
-                os.remove(filename)  # Remove the original file after encryption
+                os.remove(filename)
                 print(f"[+] Original file {filename} removed")
 
             except Exception as e:
                 print(f"[!] Error encrypting or removing {filename}: {e}")
-                continue # continue to the next file
+                continue
 
         print("[|] All files were encrypted!\nNow program will move them to the flash drive...")
         while True:
@@ -84,8 +83,8 @@ def encrypt_move():
             drive_path = f"/Volumes/{drive}"
             if os.path.ismount(drive_path):
                 for filename in files_to_process:
-                    encrypted_file = os.path.splitext(filename)[0] + ".enc" # Get the encrypted filename
-                    if os.path.exists(encrypted_file):  # Check if the encrypted file exists
+                    encrypted_file = os.path.splitext(filename)[0] + ".enc"
+                    if os.path.exists(encrypted_file):
                         try:
                             time.sleep(1)
                             print(f"[*] Moving {encrypted_file} to flash drive...")
@@ -131,7 +130,7 @@ def decrypt_return():
                 print("[!] No encrypted files with 'pass' found on the drive.")
                 return
 
-            # Create 'returned_files' directory if it doesn't exist
+
             if not os.path.exists("returned_files"):
                 os.makedirs("returned_files")
 
@@ -143,9 +142,9 @@ def decrypt_return():
                     print("[***] Complete!")
                 except Exception as e:
                     print(f"[!] Error moving {filename} from drive: {e}")
-                    continue # continue to the next file
+                    continue
 
-            # Decrypt the files
+
             with open("key.txt", "rb") as file:
                 key = file.read()
                 f = Fernet(key)
@@ -154,7 +153,7 @@ def decrypt_return():
                 if filename.endswith(".enc"):
                     try:
                         print(f"[*] The process of decryption of the file - {filename}")
-                        decrypt_file(f, filename)  # Pass the Fernet instance
+                        decrypt_file(f, filename)
                     except Exception as e:
                         print(f"[!] Error decrypting {filename}: {e}")
                         continue
@@ -191,9 +190,7 @@ def menu():
         decrypt_return()
     else:
         print("[*] Invalid input. Please try again.")
-        menu() # Restart the menu
+        menu()
 
-
-# Main execution
 key_check()
 menu()
