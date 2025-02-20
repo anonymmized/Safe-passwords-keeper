@@ -1,32 +1,51 @@
 import os
 
-def encrypt_file(key, file_path):
-    try:
-        with open(file_path, 'rb') as file:
-            data = file.read()
-        encrypted_data = key.encrypt(data)
-        filename_without_ext = os.path.splitext(file_path)[0]
-        with open(f'{filename_without_ext}.enc', 'wb') as file:
-            file.write(encrypted_data)
-        print(f"[*] Encryption of {file_path} is complete.")
+def encrypt_file(f, filename, source_folder):
+    """Encrypt a file."""
+    # Полный путь к исходному файлу
+    file_path = os.path.join(source_folder, filename)
 
-    except FileNotFoundError as err:
-        print(f"Error encrypting {file_path}: {err}")
-    except Exception as e:
-        print(f"Error encrypting {file_path}: {e}")
+    with open(file_path, "rb") as file:
+        file_data = file.read()
 
-def decrypt_file(key, file_path):
+    # Шифруем данные
+    encrypted_data = f.encrypt(file_data)
+
+    # Удаляем .txt из имени файла и сохраняем с расширением .enc
+    encrypted_filename = filename.replace('.txt', '') + ".enc"  # Формируем новое имя файла
+
+    # Сохраняем зашифрованный файл
+    with open(os.path.join(source_folder, encrypted_filename), "wb") as file:
+        file.write(encrypted_data)
+
+
+def decrypt_file(key, file_path, to_path):
+    """Decrypts a file and saves the decrypted data."""
     try:
-        with open(f'./returned_files/{file_path}', "rb") as file:
+        # Считываем зашифрованные данные
+        with open(file_path, "rb") as file:
             encrypted_data = file.read()
-        decrypted_data = key.decrypt(encrypted_data)
-        filename_without_ext = os.path.splitext(file_path)[0]
-        with open(f'./returned_files/{filename_without_ext}.txt', 'wb') as file:
-            file.write(decrypted_data)
-        print(f"[*] Decryption of {file_path} is complete.")
-        os.remove(f'./returned_files/{file_path}')
 
-    except FileNotFoundError as err:
-        print(f"Error decrypting {file_path}: {err}")
-    except Exception as e:
-        print(f"Error decrypting {file_path}: {e}")
+        # Дешифруем данные
+        decrypted_data = key.decrypt(encrypted_data)
+
+        # Имя файла без расширения .enc
+        filename_without_ext = os.path.splitext(os.path.basename(file_path))[0]
+
+        # Сохраняем расшифрованный файл в указанной директории (to_path)
+        returned_file_path = os.path.join(to_path, f'{filename_without_ext}.txt')
+
+        # Убедитесь, что целевая директория существует
+        os.makedirs(to_path, exist_ok=True)
+
+        # Сохранение расшифрованных данных
+        with open(returned_file_path, 'wb') as file:
+            file.write(decrypted_data)  # Сохраняем расшифрованные данные
+
+        print(f"[*] Decryption of {file_path} is complete.")
+
+        # Удаляем зашифрованный файл после успешной расшифровки
+        os.remove(file_path)
+
+    except FileNotFoundError:
+        print(' ')
