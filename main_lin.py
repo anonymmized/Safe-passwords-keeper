@@ -6,6 +6,7 @@ import os
 import time
 import sys
 import shutil
+import getpass  # Import getpass to get the username
 
 RED = "\033[91m"
 END = "\033[0m"
@@ -112,8 +113,10 @@ def encrypt_move():
             key = file.read()
             f = Fernet(key)
 
-        drive_name = input("[?] Enter the name of the drive (mount point): ")
-        drive_path = f"/media/{drive_name}"
+        # Get the current user's name
+        user_name = getpass.getuser()
+        drive_name = input(f"[?] Enter the name of the drive (mount point) under '/media/{user_name}': ")
+        drive_path = f"/media/{user_name}/{drive_name}"
 
         if not os.path.ismount(drive_path):
             print(f"[!] Drive '{drive_name}' is not mounted. Please make sure the drive is connected.")
@@ -130,9 +133,8 @@ def encrypt_move():
                 encrypted_filename = filename.replace('.txt', '.enc')
                 encrypted_file_path = os.path.join(working_directory, "source_files", encrypted_filename)
 
-                destination_file_path = os.path.join(drive_path, encrypted_filename)
-
                 if os.path.exists(encrypted_file_path):
+                    destination_file_path = os.path.join(drive_path, encrypted_filename)
                     shutil.move(encrypted_file_path, destination_file_path)
                     print(f"[+] Moved encrypted file {encrypted_filename} to drive {drive_name}.")
                 else:
@@ -156,8 +158,10 @@ def decrypt_return():
         print("[!] Files will be decrypted now [!]")
         files_to_decrypt = []
 
-        drive = input("[?] Enter the name of the drive (mount point): ")
-        drive_path = f"/media/{drive}"
+        # Get the current user's name
+        user_name = getpass.getuser()
+        drive = input(f"[?] Enter the name of the drive (mount point) under '/media/{user_name}': ")
+        drive_path = f"/media/{user_name}/{drive}"
 
         if os.path.ismount(drive_path):
             print(f"[+] Drive {drive} is mounted. Searching for .enc files...")
@@ -185,8 +189,8 @@ def decrypt_return():
             filename = os.path.basename(filepath)
             try:
                 print(f"[*] File decryption process - {filename}")
-                decrypt_file(f, filepath, working_directory + "/processed_files")
-                print(f"[+] Encrypted file {filename} removed.")
+                decrypt_file(f, filepath, os.path.join(working_directory, "processed_files"))
+                print(f"[+] Decrypted file {filename} removed from processing location.")
             except Exception as e:
                 print(f"[!] Error decrypting or removing {filename}: {e}")
 
