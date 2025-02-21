@@ -119,7 +119,7 @@ def encrypt_move():
         drive_path = f"/media/{user_name}/{drive_name}"
 
         if not os.path.ismount(drive_path):
-            print(f"[!] Drive '{drive_name}' is not mounted. Please make sure the drive is connected.")
+            print(f"[!] Drive '{drive_name}' is not mounted or the path is incorrect. Please check your connection.")
             return
 
         for filename in files_to_encrypt:
